@@ -13,7 +13,7 @@ We initially focus on the following two **Project events** and **Issue events** 
 
 ## Platform
 
-Platform is [Nodejs] [https://nodejs.org/en/] with [Express](http://expressjs.com/)
+Platform is [Nodejs] (https://nodejs.org/en/) with [Express](http://expressjs.com/)
 
 ## Implemetation
 
