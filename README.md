@@ -7,7 +7,7 @@ There is not any perfect Jira integrations to slack . Current Official Integrati
 
 We here aim a better solution. 
 
-Jira has a well documented good solution called  [Jira WebHook] [https://developer.atlassian.com/static/connect/docs/latest/modules/common/webhook.html]  which triggers other application on Jira events .
+Jira has a well documented good solution called  [Jira WebHook] (https://developer.atlassian.com/static/connect/docs/latest/modules/common/webhook.html)  which triggers other application on Jira events .
 
 We initially focus on the following two **Project events** and **Issue events** .
 
