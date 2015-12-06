@@ -17,8 +17,8 @@
   "main": "app.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/adilatilgan/jira2slack.git"
+    "url": "https://github.com/koc-university/jira2slack"
   },
   "author": "adilatilgan",
-  "license": ""
+  "license": "apache-v2"
 }
