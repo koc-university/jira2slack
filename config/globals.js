@@ -10,9 +10,6 @@
  */
 module.exports.globals = {
 
-  slack_client_id:'15219086661.15982149152',
-  slack_secret : '2a14008dcff1b6363699f668e331e3d1'
-
   /****************************************************************************
   *                                                                           *
   * Expose the lodash installed in Sails core as a global variable. If this   *
