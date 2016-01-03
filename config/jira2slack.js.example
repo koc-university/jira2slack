@@ -1,0 +1,5 @@
+module.exports.jira2slack = {
+  slackToken : 'slack web api token',
+  accessToken : 'random string to use in Jira webhook',
+  cacheExpire : 15 /*expire time in minutes*/
+};
