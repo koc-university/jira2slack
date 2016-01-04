@@ -1,5 +1,5 @@
 var request = require('supertest');
-var accessToken = process.env.ACCESS_TOKEN || sails.config.jira2slack.accessToken;
+
 
 describe('SlackController', function() {
 
@@ -18,7 +18,7 @@ describe('SlackController', function() {
 	describe('#emptyPostData()', function() {
 		it('should return http 501', function(done) {
 			request(sails.hooks.http.app)
-				.post('/?token=' + accessToken)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({})
 				.expect(501, done);
 		});
@@ -26,8 +26,9 @@ describe('SlackController', function() {
 
 	describe('#createChannel()', function() {
 		it('should return http 200', function(done) {
+			console.log(sails.config.jira2slack.accessToken);
 			request(sails.hooks.http.app)
-				.post('/?token=' + accessToken)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({
 					webhookEvent: 'project_created',
 					project: {
@@ -42,7 +43,7 @@ describe('SlackController', function() {
 	describe('#setChannelPurpos()', function() {
 		it('should return http 200', function(done) {
 			request(sails.hooks.http.app)
-				.post('/?token=' + accessToken)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({
 					webhookEvent: 'project_updated',
 					project: {
@@ -57,7 +58,7 @@ describe('SlackController', function() {
 	describe('#archiveChannel()', function() {
 		it('should return http 200', function(done) {
 			request(sails.hooks.http.app)
-				.post('/?token=' + accessToken)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({
 					webhookEvent: 'project_deleted',
 					project: {
@@ -72,7 +73,7 @@ describe('SlackController', function() {
 	describe('#issueCreatedPost()', function() {
 		it('should return http 200', function(done) {
 			request(sails.hooks.http.app)
-				.post('/?token=' + accessToken)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({
 					webhookEvent: 'jira:issue_created',
 					issue: {
@@ -106,7 +107,7 @@ describe('SlackController', function() {
 	describe('#commentCreatedPost()', function() {
 		it('should return http 200', function(done) {
 			request(sails.hooks.http.app)
-				.post('/?token=' + accessToken)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({
 					webhookEvent: 'jira:issue_updated',
 					issue: {
@@ -143,7 +144,7 @@ describe('SlackController', function() {
 	describe('#issueUpdatedPost()', function() {
 		it('should return http 200', function(done) {
 			request(sails.hooks.http.app)
-				.post('/?token=' + accessToken)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({
 					webhookEvent: 'jira:issue_updated',
 					issue: {
@@ -180,7 +181,7 @@ describe('SlackController', function() {
 	describe('#issueDeletedPost()', function() {
 		it('should return http 200', function(done) {
 			request(sails.hooks.http.app)
-				.post('/?token=' + accessToken)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({
 					webhookEvent: 'jira:issue_deleted',
 					issue: {
