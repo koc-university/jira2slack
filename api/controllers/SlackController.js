@@ -27,9 +27,11 @@ function setError(error, res) {
 }
 
 function loadChannelCache() {
+
   return new Promise(function(resolve, reject) {
     slack.api('channels.list', function(err, response) {
       if (err || !response.ok) {
+        sails.log.error("Channell List Error: " + JSON.stringify(response));
         reject((!response.ok) ? response.error : err);
       } else {
         channelCache.clear();
@@ -50,9 +52,10 @@ function loadChannelCache() {
 }
 
 function getChannelInfo(projectKey) {
+
   return new Promise(function(resolve, reject) {
     let channelInfo = channelCache[projectKey];
-
+    sails.log.debug("has cached info" + channelInfo);
     if (channelInfo && (channelInfo.expiration > new Date().getTime())) {
       sails.log.debug("has cached info");
       resolve(channelInfo);
@@ -85,6 +88,7 @@ function getChannelInfo(projectKey) {
 }
 
 function createChannel(projectKey) {
+    sails.log.debug("creating channel:" + projectKey);
   return new Promise(function(resolve, reject) {
     sails.log.debug("creating channel:" + projectKey);
     slack.api('channels.create', {
@@ -169,8 +173,11 @@ function setChannelPurpose(channelInfo, purpose) {
 }
 
 function createOrUnarchiveChannel(projectKey, purpose) {
+  sails.log.debug("channel info "+projectKey);
   return new Promise(function(resolve, reject) {
+
     getChannelInfo(projectKey).then(function(channelInfo) {
+      sails.log.debug("channel info "+channelInfo );
       if (channelInfo && channelInfo !== null) {
 
         if (channelInfo.archived) {
@@ -179,6 +186,7 @@ function createOrUnarchiveChannel(projectKey, purpose) {
             .then(joinChannel(channelInfo))
             .then(setChannelPurpose(channelInfo, purpose)).then(() => resolve(channelInfo)).catch(error => reject(error));
         } else {
+          sails.log.debug("channel was archived, unarchiving");
           /* the channel name/purpose might have changed */
           setChannelPurpose(channelInfo, purpose).then(() => resolve(channelInfo)).catch(error => reject(error));
         }
@@ -422,6 +430,7 @@ module.exports = {
     }
 
     let message = req.body;
+      sails.log.debug("1 : creating channel:" + JSON.stringify(req.body));
     switch (message.webhookEvent) {
       case 'project_created':
         {
