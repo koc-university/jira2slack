@@ -26,7 +26,6 @@ describe('SlackController', function() {
 
 	describe('#createChannel()', function() {
 		it('should return http 200', function(done) {
-			console.log(sails.config.jira2slack.accessToken);
 			request(sails.hooks.http.app)
 				.post('/?token=' + sails.config.jira2slack.accessToken)
 				.send({
@@ -38,9 +37,22 @@ describe('SlackController', function() {
 				})
 				.expect(200, done);
 		});
+
+		it('mising channel, should return http 500', function(done) {
+			request(sails.hooks.http.app)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
+				.send({
+					webhookEvent: 'project_created',
+					project: {
+						key: '',
+						name: 'MOCHA TEST CHANNEL'
+					}
+				})
+				.expect(500, done);
+		});
 	});
 
-	describe('#setChannelPurpos()', function() {
+	describe('#setChannelPurpose()', function() {
 		it('should return http 200', function(done) {
 			request(sails.hooks.http.app)
 				.post('/?token=' + sails.config.jira2slack.accessToken)
@@ -167,10 +179,12 @@ describe('SlackController', function() {
 					changelog: {
 						items: [{
 							field: 'Priority',
-							toString: 'MINOR'
+							fromString: 'MINOR',
+							toString: 'MAJOR'
 						}, {
 							field: 'SomeField',
-							toString: 'SomeValue'
+							fromString: 'SomeValue',
+							toString: 'SomeOtherValue'
 						}]
 					}
 				})
@@ -197,6 +211,98 @@ describe('SlackController', function() {
 					},
 					user: {
 						name: 'bob'
+					}
+				})
+				.expect(200, done);
+		});
+	});
+
+	describe('#issueClosedPost()', function() {
+		it('should return http 200', function(done) {
+			request(sails.hooks.http.app)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
+				.send({
+					webhookEvent: 'jira:issue_updated',
+					issue: {
+						self: 'https://jira.example.com/jira/rest',
+						key: 'TEST_ISSUE-01',
+						fields: {
+							project: {
+								key: 'TEST_CHANNEL',
+								name: 'MOCHA TEST CHANNEL'
+							},
+							summary: 'Mocha test issue',
+							issuetype: {
+								name: 'TASK'
+							},
+							"resolution": {
+								"self": "http://jira.example.com/jira/rest/api/2/resolution/10001",
+								"id": "10001",
+								"description": "This was completed.",
+								"name": "Done"
+							},
+							"creator": {
+								"name": "admin",
+								"key": "admin",
+								"emailAddress": "admin@admin.com",
+								"displayName": "Bob Smith",
+							},
+						}
+					},
+					user: {
+						name: 'bob'
+					},
+					changelog: {
+						items: [{
+							"field": "resolution",
+							"fieldtype": "jira",
+							"from": null,
+							"fromString": null,
+							"to": "10001",
+							"toString": "Done"
+						}, {
+							field: 'SomeField',
+							fromString: 'SomeValue',
+							toString: 'SomeOtherValue'
+						}]
+					}
+				})
+				.expect(200, done);
+		});
+	});
+
+	describe('#workLogUpdated()', function() {
+		it('should return http 200', function(done) {
+			request(sails.hooks.http.app)
+				.post('/?token=' + sails.config.jira2slack.accessToken)
+				.send({
+					webhookEvent: 'jira:worklog_updated',
+					issue: {
+						self: 'https://jira.example.com/jira/rest',
+						key: 'TEST_ISSUE-01',
+						fields: {
+							project: {
+								key: 'TEST_CHANNEL',
+								name: 'MOCHA TEST CHANNEL'
+							},
+							summary: 'Mocha test issue',
+							issuetype: {
+								name: 'TASK'
+							}
+						}
+					},
+					user: {
+						name: 'bob'
+					},
+					changelog: {
+						items: [{
+							field: 'timeestimate',
+							toString: '144000'
+						}, {
+							field: 'timespent',
+							fromString: '28800',
+							toString: '57600'
+						}]
 					}
 				})
 				.expect(200, done);
