@@ -6,20 +6,21 @@
  */
 'use strict';
 
-var apiToken = process.env.SLACK_TOKEN || sails.config.jira2slack.slackToken;
-var Slack = require('slack-node');
-var slack = new Slack(apiToken);
-var accessToken = process.env.ACCESS_TOKEN || sails.config.jira2slack.accessToken;
-var expirationTime = process.env.CACHE_EXPIRE || 15; /*default to 15 minutes*/
+const apiToken = process.env.SLACK_TOKEN || sails.config.jira2slack.slackToken;
+const Slack = require('slack-node');
+const slack = new Slack(apiToken);
+const accessToken = process.env.ACCESS_TOKEN || sails.config.jira2slack.accessToken;
+
+let expirationTime = process.env.CACHE_EXPIRE || 15; /*default to 15 minutes*/
 if (sails.config.jira2slack && sails.config.jira2slack.cacheExpire) {
   expirationTime = sails.config.jira2slack.cacheExpire;
 }
 
 /* base URL for Jira tickets, grabbed from first ticket processed */
-var baseUrl;
+let baseUrl;
 
 /* cache information about Slack channels */
-var channelCache = new Map();
+let channelCache = new Map();
 
 function setError(error, res) {
   sails.log.error(error);
@@ -92,23 +93,20 @@ function getChannelInfo(projectKey) {
 }
 
 function createChannel(projectKey) {
-  return new Promise(function(resolve, reject) {
-    sendSlackRequest('channels.create', {
-        name: projectKey
-      })
-      .then(response => {
-        let channelInfo = {
-          key: projectKey,
-          id: response.channel.id,
-          archived: false,
-          purpose: ' ',
-          expiration: new Date().getTime() + expirationTime
-        };
+  return sendSlackRequest('channels.create', {
+      name: projectKey
+    })
+    .then(response => {
+      let channelInfo = {
+        key: projectKey,
+        id: response.channel.id,
+        archived: false,
+        purpose: ' ',
+        expiration: new Date().getTime() + expirationTime
+      };
 
-        channelCache[projectKey] = channelInfo;
-        resolve(channelInfo);
-      }).catch(error => reject(error));
-  });
+      channelCache[projectKey] = channelInfo;
+    });
 }
 
 function joinChannel(channelInfo) {
@@ -127,51 +125,44 @@ function unarchiveChannel(channelInfo) {
 }
 
 function setChannelPurpose(channelInfo, purpose) {
-  return new Promise(function(resolve, reject) {
-    let setPurpose = channelInfo.purpose !== purpose;
-    if (setPurpose) {
-      sendSlackRequest('channels.setPurpose', {
-        channel: channelInfo.id,
-        purpose: purpose
-      }).then(() => {
-        channelCache[channelInfo.key].purpose = purpose;
-        channelInfo.purpose = purpose;
-        resolve(channelInfo);
-      }).catch(error => reject(error));
-    } else {
-      resolve(channelInfo);
-    }
-  });
+  let setPurpose = channelInfo.purpose !== purpose;
+  if (setPurpose) {
+    return sendSlackRequest('channels.setPurpose', {
+      channel: channelInfo.id,
+      purpose: purpose
+    }).then(() => {
+      channelCache[channelInfo.key].purpose = purpose;
+      channelInfo.purpose = purpose;
+    });
+  } else {
+    return new Promise(resolve => resolve(channelInfo));
+  }
 }
 
 function createOrUnarchiveChannel(projectKey, purpose) {
-  return new Promise(function(resolve, reject) {
-    getChannelInfo(projectKey).then(function(channelInfo) {
-      sails.log.debug("channel info: " + JSON.stringify(channelInfo));
-      if (channelInfo && channelInfo !== null) {
+  return getChannelInfo(projectKey).then(function(channelInfo) {
+    sails.log.debug("channel info: " + JSON.stringify(channelInfo));
+    if (channelInfo && channelInfo !== null) {
 
-        if (channelInfo.archived) {
-          sails.log.debug("channel was archived, unarchiving");
-          unarchiveChannel(channelInfo)
-            .then(() => {
-              return joinChannel(channelInfo);
-            })
-            .then(() => {
-              return setChannelPurpose(channelInfo, purpose);
-            }).then(() => resolve(channelInfo)).catch(error => reject(error));
-        } else {
-          /* the channel name/purpose might have changed */
-          setChannelPurpose(channelInfo, purpose).then(() => resolve(channelInfo)).catch(error => reject(error));
-        }
+      if (channelInfo.archived) {
+        sails.log.debug("channel was archived, unarchiving");
+        return unarchiveChannel(channelInfo)
+          .then(() => {
+            return joinChannel(channelInfo);
+          })
+          .then(() => {
+            return setChannelPurpose(channelInfo, purpose);
+          });
       } else {
-        createChannel(projectKey)
-          .then(
-            info => {
-              return setChannelPurpose(info, purpose);
-            })
-          .then(info => resolve(info)).catch(error => reject(error));
+        /* the channel name/purpose might have changed */
+        return setChannelPurpose(channelInfo, purpose);
       }
-    });
+    } else {
+      return createChannel(projectKey)
+        .then(() => {
+          return setChannelPurpose(channelCache[projectKey], purpose);
+        });
+    }
   });
 }
 
@@ -217,7 +208,8 @@ function projectDeleted(message, res) {
 
 function postMessage(projectKey, purpose, chatMessage, attachment, res) {
   createOrUnarchiveChannel(projectKey, purpose)
-    .then(channelInfo => {
+    .then(() => {
+      let channelInfo = channelCache[projectKey];
       return sendSlackRequest('chat.postMessage', {
         channel: channelInfo.id,
         text: chatMessage,
@@ -264,7 +256,6 @@ function issueCreated(message, res) {
   postMessage(projectKey, projectName, msg, attachment, res);
 }
 
-
 function issueUpdated(message, res) {
   sails.log.debug('issue updated');
 
@@ -285,7 +276,12 @@ function issueUpdated(message, res) {
   let msg = '';
   let attachment = '';
 
-  if (message.comment) { /* a comment was added */
+  let wasResolved = false;
+  if (message.issue.fields.resolution && message.changelog.items.some(item => item.field === 'resolution')) {
+    wasResolved = true;
+  }
+
+  if (message.comment && !wasResolved) { /* a comment was added */
     let comment = message.comment.body;
     msg = `${user} commented on ${issueKey} <${issueUrl}|${issueKey}>`;
     attachment = `[{"color": "warning", "fields": [
@@ -293,7 +289,7 @@ function issueUpdated(message, res) {
 {"title": "Comment", "value": "${comment }", "short": false}]}]`;
   } else if (message.changelog) {
     /* issue was closed */
-    if (message.issue.fields.resolution && message.changelog.items.some(item => item.field === 'resolution')) {
+    if (wasResolved) {
       let creator = message.issue.fields.creator.displayName;
       let assignee = creator;
       if (message.issue.fields.assignee) {
@@ -301,11 +297,20 @@ function issueUpdated(message, res) {
       }
 
       msg = `${user} closed ${issueKey} <${issueUrl}|${issueKey}>`;
+      let comment;
+      if (message.comment) { /* do we have a comment on a close */
+        comment = message.comment.body;
+      }
       attachment = `[{"color": "good", "fields": [
 {"title": "Summary", "value": "${summary}","short": false},
 {"title": "Staus", "value": "${message.issue.fields.resolution.name}","short": false},
 {"title": "Assignee", "value": "${assignee}","short": true},
-{"title": "Creator", "value": "${creator}","short": true}]}]`;
+{"title": "Creator", "value": "${creator}","short": true}`;
+      if (comment) {
+        attachment += `,{"title": "Comment", "value": "${comment }", "short": false}`;
+      }
+
+      attachment += `]}]`;
     } else {
       msg = `${user} updated ${issueKey} <${issueUrl}|${issueKey}>`;
       if (message.changelog.items) {
