@@ -16,7 +16,7 @@
     "debug": "node debug app.js",
     "start": "node app.js",
     "test": "mocha test/bootstrap.test.js test/unit/**/*.test.js",
-    "bamboo": "mocha test/bootstrap.test.js -R mocha-bamboo-reporter test/unit/**/*.test.js"
+    "bamboo": "mocha -R mocha-bamboo-reporter test/bootstrap.test.js test/unit/**/*.test.js"
   },
   "main": "app.js",
   "repository": {
