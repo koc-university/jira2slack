@@ -32,7 +32,10 @@ describe('SlackController', function() {
 					webhookEvent: 'project_created',
 					project: {
 						key: 'TEST_CHANNEL',
-						name: 'MOCHA TEST CHANNEL'
+						name: 'MOCHA TEST CHANNEL',
+						projectLead: {
+							emailAddress: 'test@example.com'
+						}
 					}
 				})
 				.expect(200, done);
@@ -45,7 +48,10 @@ describe('SlackController', function() {
 					webhookEvent: 'project_created',
 					project: {
 						key: '',
-						name: 'MOCHA TEST CHANNEL'
+						name: 'MOCHA TEST CHANNEL',
+						projectLead: {
+							emailAddress: 'test@example.com'
+						}
 					}
 				})
 				.expect(500, done);
@@ -104,12 +110,16 @@ describe('SlackController', function() {
 								name: 'MAJOR'
 							},
 							assignee: {
-								name: 'carol'
+								name: 'carol',
+								displayName: 'Carol Smith',
+								emailAddress: 'test@example.com'
 							}
 						}
 					},
 					user: {
-						name: 'bob'
+						name: 'bob',
+						displayName: 'Bob Smith',
+						emailAddress: 'test@example.com'
 					}
 				})
 				.expect(200, done);
@@ -138,12 +148,16 @@ describe('SlackController', function() {
 								name: 'MAJOR'
 							},
 							assignee: {
-								name: 'carol'
+								name: 'carol',
+								displayName: 'Carol Smith',
+								emailAddress: 'test@example.com'
 							}
 						}
 					},
 					user: {
-						name: 'bob'
+						name: 'bob',
+						displayName: 'Bob Smith', 
+						emailAddress: 'test@example.com'
 					},
 					comment: {
 						body: 'This is a comment.'
@@ -174,7 +188,9 @@ describe('SlackController', function() {
 						}
 					},
 					user: {
-						name: 'bob'
+						name: 'bob',
+						displayName: 'Bob Smith',
+						emailAddress: 'test@example.com'
 					},
 					changelog: {
 						items: [{
@@ -210,7 +226,9 @@ describe('SlackController', function() {
 						}
 					},
 					user: {
-						name: 'bob'
+						name: 'bob',
+						displayName: 'Bob Smith',
+						emailAddress: 'test@example.com'
 					}
 				})
 				.expect(200, done);
@@ -235,31 +253,33 @@ describe('SlackController', function() {
 							issuetype: {
 								name: 'TASK'
 							},
-							"resolution": {
-								"self": "http://jira.example.com/jira/rest/api/2/resolution/10001",
-								"id": "10001",
-								"description": "This was completed.",
-								"name": "Done"
+							resolution: {
+								self: 'http://jira.example.com/jira/rest/api/2/resolution/10001',
+								id: '10001',
+								description: 'This was completed.',
+								name: 'Done'
 							},
-							"creator": {
-								"name": "admin",
-								"key": "admin",
-								"emailAddress": "admin@admin.com",
-								"displayName": "Bob Smith",
+							creator: {
+								name: 'admin',
+								key: 'admin',
+								emailAddress: 'admin@admin.com',
+								displayName: 'Bob Smith',
 							},
 						}
 					},
 					user: {
-						name: 'bob'
+						name: 'bob',
+						displayName: 'Bob Smith',
+						emailAddress: 'test@example.com'
 					},
 					changelog: {
 						items: [{
-							"field": "resolution",
-							"fieldtype": "jira",
-							"from": null,
-							"fromString": null,
-							"to": "10001",
-							"toString": "Done"
+							field: 'resolution',
+							fieldtype: 'jira',
+							from: null,
+							fromString: null,
+							to: '10001',
+							toString: 'Done'
 						}, {
 							field: 'SomeField',
 							fromString: 'SomeValue',
@@ -292,7 +312,9 @@ describe('SlackController', function() {
 						}
 					},
 					user: {
-						name: 'bob'
+						name: 'bob',
+						displayName: 'Bob Smith',
+						emailAddress: 'test@example.com'
 					},
 					changelog: {
 						items: [{
