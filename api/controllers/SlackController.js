@@ -62,9 +62,9 @@ function loadUserCache() {
           }
         });
         userCache.expiration = new Date().getTime() + Number(expirationTime);
-        resolve();
       }).catch(error => reject(error));
     }
+    resolve();
   });
 }
 
